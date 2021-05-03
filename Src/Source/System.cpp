@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <iostream>
 #include <fstream>
+#include <json.h>
 
 System::System()
 {
@@ -28,11 +29,11 @@ bool System::InvalidValue(XLValueType type)
 	return type == XLValueType::Error || type == XLValueType::Empty;
 }
 
-void System::GenerateStruct(XLWorksheet& workSheet, std::string workSheetName, std::string outputDirectory)
+
+/** TODO: 备炼眉 积己何盒 盒府 */
+void System::Generate(XLWorksheet& workSheet, std::string outputDirectory)
 {
 	int asciiCode = 65; // A
-
-	std::vector<std::string> cellNames;
 
 	while (true)
 	{
@@ -40,22 +41,17 @@ void System::GenerateStruct(XLWorksheet& workSheet, std::string workSheetName, s
 		cellIndex = (char(asciiCode));
 		cellIndex += "1";
 
-		std::cout << "沤祸 CellIndex: " << cellIndex << std::endl;
-
 		auto cell = workSheet.cell(XLCellReference(cellIndex)).value();
 		if (InvalidValue(cell.valueType()))
 		{
-			std::cout << "Done!" << std::endl;
 			break;
 		}
 
 		try
 		{
-			std::cout << cell.get<std::string>() << std::endl;
-			
 			if(cellIndex != "A1")
 			{
-				cellNames.push_back(cell.get<std::string>());
+				dataNames.push_back(cell.get<std::string>());
 			}
 		}
 		catch (XLException e)
@@ -66,19 +62,43 @@ void System::GenerateStruct(XLWorksheet& workSheet, std::string workSheetName, s
 		asciiCode++;
 	}
 
-	GenerateSourceCode(cellNames, workSheetName, outputDirectory);
+	GenerateSourceCode(workSheet.name(), outputDirectory);
+	GenerateJson(workSheet);
 }
 
-void System::GenerateSourceCode(std::vector<std::string> cellNames, std::string workSheetName, std::string outputDirectory)
+void System::GenerateJson(XLWorksheet& workSheet)
 {
-	std::cout << "Generate Struct" << std::endl;
+	std::cout << "Generate Json to " + workSheet.name() << std::endl;
+
+	if (dataNames.empty())
+	{
+		std::cout << "ERROR: DataName Is Empty" << std::endl;
+		exit(-1);
+	}
+
+	/** TODO: Json 单捞磐 积己 */
+	Json::Value root;
+
+	Json::StreamWriterBuilder writer;
+	std::cout << Json::writeString(writer, root) << std::endl;
+}
+
+void System::GenerateSourceCode(std::string workSheetName, std::string outputDirectory)
+{
+	std::cout << "Generate SourceCode to " + workSheetName << std::endl;
+
+	if (dataNames.empty())
+	{
+		std::cout << "ERROR: DataName Is Empty" << std::endl;
+		exit(-1);
+	}
 
 	std::ofstream file;
 
 	file.open(outputDirectory + workSheetName + ".h");
 	if (file.is_open())
 	{
-		std::string Header = CreateHeaderCode(cellNames, workSheetName);
+		std::string Header = CreateHeaderCode(workSheetName);
 		file.write(Header.c_str(), Header.size());
 	}
 	file.close();
@@ -92,7 +112,7 @@ void System::GenerateSourceCode(std::vector<std::string> cellNames, std::string 
 	file.close();
 }
 
-std::string System::CreateHeaderCode(std::vector<std::string> cellNames, std::string workSheetName)
+std::string System::CreateHeaderCode(std::string workSheetName)
 {
 	std::string HeaderCode =
 		"#pragma once\n"
@@ -106,7 +126,7 @@ std::string System::CreateHeaderCode(std::vector<std::string> cellNames, std::st
 		"\tGENERATED_USTRUCT_BODY()\n"
 		"public:\n";
 
-	for (auto name : cellNames)
+	for (auto name : dataNames)
 	{
 		HeaderCode +=
 			"\tUPROPERTY(EditAnywhere, BlueprintReadWrite)\n"

@@ -4,10 +4,6 @@
 
 int main(int argc, char* argv[])
 {
-	std::cout << "********************************************************************************\n";
-	std::cout << "Excel Parsing Program Run!\n";
-	std::cout << "********************************************************************************\n";
-
 	if (argc < 2)
 	{
 		std::cout << "ERROR: argv가 정의되지않았습니다." << std::endl;
@@ -27,7 +23,7 @@ int main(int argc, char* argv[])
 		int asciiCode = 65; // A
 		auto wks = doc.workbook().worksheet(doc.workbook().worksheetNames()[0]);
 
-		system.GenerateStruct(wks, doc.workbook().worksheetNames()[0], outputDirectory);
+		system.Generate(wks, outputDirectory);
 
 		doc.close();
 	}
