@@ -29,38 +29,9 @@ bool System::InvalidValue(XLValueType type)
 	return type == XLValueType::Error || type == XLValueType::Empty;
 }
 
-
-/** TODO: 구조체 생성부분 분리 */
 void System::Generate(XLWorksheet& workSheet, std::string outputDirectory)
 {
-	int asciiCode = 65; // A
-
-	while (true)
-	{
-		std::string cellIndex;
-		cellIndex = (char(asciiCode));
-		cellIndex += "1";
-
-		auto cell = workSheet.cell(XLCellReference(cellIndex)).value();
-		if (InvalidValue(cell.valueType()))
-		{
-			break;
-		}
-
-		try
-		{
-			if(cellIndex != "A1")
-			{
-				dataNames.push_back(cell.get<std::string>());
-			}
-		}
-		catch (XLException e)
-		{
-			std::cout << e.what() << std::endl;
-		}
-
-		asciiCode++;
-	}
+	SetDataNames(workSheet);
 
 	GenerateSourceCode(workSheet.name(), outputDirectory);
 	GenerateJson(workSheet);
@@ -77,6 +48,9 @@ void System::GenerateJson(XLWorksheet& workSheet)
 	}
 
 	/** TODO: Json 데이터 생성 */
+	/** 테스트 형식 작성후 UE4에서 파싱*/
+	/** 파싱 성공한 형식에 맞춰서 데이터 생성하기 */
+
 	Json::Value root;
 
 	Json::StreamWriterBuilder writer;
@@ -155,4 +129,36 @@ std::string System::CreateSourceCode(std::string workSheetName)
 		"{\n}\n";
 
 	return SourceCode;
+}
+
+void System::SetDataNames(XLWorksheet& workSheet)
+{
+	int asciiCode = 65; // A
+
+	while (true)
+	{
+		std::string cellIndex;
+		cellIndex = (char(asciiCode));
+		cellIndex += "1";
+
+		auto cell = workSheet.cell(XLCellReference(cellIndex)).value();
+		if (InvalidValue(cell.valueType()))
+		{
+			break;
+		}
+
+		try
+		{
+			if (cellIndex != "A1")
+			{
+				dataNames.push_back(cell.get<std::string>());
+			}
+		}
+		catch (XLException e)
+		{
+			std::cout << e.what() << std::endl;
+		}
+
+		asciiCode++;
+	}
 }

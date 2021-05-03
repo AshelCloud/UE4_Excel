@@ -31,11 +31,15 @@ private:
 	/** A열에 있는 Cell이 Root이며 그 행을 데이터로 추가 */
 	void GenerateJson(XLWorksheet& workSheet);
 
+	/** TODO: API 이름(현재 TESTPROJECT_API) argv로 받아오기 */
 	/** .h에 들어갈 row code를 반환 */
 	std::string CreateHeaderCode(std::string workSheetName);
 
 	/** .cpp에 들어갈 row code를 반환 */
 	std::string CreateSourceCode(std::string workSheetName);
+
+	/** 구조체에 들어갈 변수명을 채워넣음 */
+	void SetDataNames(XLWorksheet& workSheet);
 
 private:
 	/** 1행에 있는 Cell 이름들 (A1번째 Cell 값 제외) */
