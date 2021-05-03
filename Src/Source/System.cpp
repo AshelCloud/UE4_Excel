@@ -34,10 +34,10 @@ void System::Generate(XLWorksheet& workSheet, std::string outputDirectory)
 	SetDataNames(workSheet);
 
 	GenerateSourceCode(workSheet.name(), outputDirectory);
-	GenerateJson(workSheet);
+	GenerateJson(workSheet, outputDirectory);
 }
 
-void System::GenerateJson(XLWorksheet& workSheet)
+void System::GenerateJson(XLWorksheet& workSheet, std::string outputDirectory)
 {
 	std::cout << "Generate Json to " + workSheet.name() << std::endl;
 
@@ -53,8 +53,41 @@ void System::GenerateJson(XLWorksheet& workSheet)
 
 	Json::Value root;
 
+	int asciiCode = 66;
+	int Index = 3;
+
+	Json::Value id;
+
+	Json::Value data;
+	for (auto name : dataNames)
+	{
+		std::string cellIndex;
+		cellIndex = ((char)asciiCode);
+		cellIndex += std::to_string(Index);
+		auto cell = workSheet.cell(XLCellReference(cellIndex));
+
+		std::cout << name << ": " << cell.value().get<int>() << std::endl;
+
+		data[name] = cell.value().get<int>();
+
+		asciiCode++;
+	}
+	
+	id.append(data);
+
+	root["id"] = id;
+
 	Json::StreamWriterBuilder writer;
-	std::cout << Json::writeString(writer, root) << std::endl;
+
+	std::string jsonString = Json::writeString(writer, root);
+
+	std::ofstream file;
+	file.open(outputDirectory + "Json\\" + workSheet.name() + ".json");
+	if(file.is_open())
+	{
+		file.write(jsonString.c_str(), jsonString.size());
+	}
+	file.close();
 }
 
 void System::GenerateSourceCode(std::string workSheetName, std::string outputDirectory)

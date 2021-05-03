@@ -29,7 +29,7 @@ private:
 
 	/** Json 생성 */
 	/** A열에 있는 Cell이 Root이며 그 행을 데이터로 추가 */
-	void GenerateJson(XLWorksheet& workSheet);
+	void GenerateJson(XLWorksheet& workSheet, std::string outputDirectory);
 
 	/** TODO: API 이름(현재 TESTPROJECT_API) argv로 받아오기 */
 	/** .h에 들어갈 row code를 반환 */
