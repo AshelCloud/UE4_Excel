@@ -41,7 +41,9 @@ private:
 	/** 구조체에 들어갈 변수명을 채워넣음 */
 	void SetDataNames(XLWorksheet& workSheet);
 
+	const std::string& ConvertCellValueTypeToString(XLWorksheet& workSheet, char asciiCode);
+
 private:
 	/** 1행에 있는 Cell 이름들 (A1번째 Cell 값 제외) */
-	std::vector<std::string> dataNames;
+	std::vector<std::pair<std::string, std::string>> cellDatas;
 };

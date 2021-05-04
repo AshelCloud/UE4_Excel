@@ -21,9 +21,12 @@ int main(int argc, char* argv[])
 		doc.open(fileName);
 
 		int asciiCode = 65; // A
-		auto wks = doc.workbook().worksheet(doc.workbook().worksheetNames()[0]);
+		for(std::string worksheetName : doc.workbook().worksheetNames())
+		{
+			auto wks = doc.workbook().worksheet(worksheetName);
 
-		system.Generate(wks, outputDirectory);
+			system.Generate(wks, outputDirectory);
+		}
 
 		doc.close();
 	}

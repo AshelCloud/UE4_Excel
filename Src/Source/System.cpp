@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <json.h>
+#include <cmath>
 
 System::System()
 {
@@ -26,7 +27,7 @@ std::vector<std::string> System::GetFilesName(std::string filePath) const
 
 bool System::InvalidValue(XLValueType type)
 {
-	return type == XLValueType::Error || type == XLValueType::Empty;
+	return (type == XLValueType::Error) || (type == XLValueType::Empty);
 }
 
 void System::Generate(XLWorksheet& workSheet, std::string outputDirectory)
@@ -41,39 +42,73 @@ void System::GenerateJson(XLWorksheet& workSheet, std::string outputDirectory)
 {
 	std::cout << "Generate Json to " + workSheet.name() << std::endl;
 
-	if (dataNames.empty())
+	auto ConvertCellToJsonValue = [](std::string key, XLCellValue Cell) 
+	{
+		Json::Value data;
+		switch (Cell.valueType())
+		{
+		case XLValueType::Float:
+			data[key] = Cell.get<double>();
+			break;
+
+		case XLValueType::Integer:
+			data[key] = Cell.get<int>();
+			break;
+
+		case XLValueType::String:
+			data[key] = Cell.get<std::string>();
+			break;
+
+		case XLValueType::Boolean:
+			data[key] = Cell.get<bool>();
+			break;
+		}
+
+		std::cout << key << ": " << data[key] << std::endl;
+
+		return data;
+	};
+
+	if (cellDatas.empty())
 	{
 		std::cout << "ERROR: DataName Is Empty" << std::endl;
 		exit(-1);
 	}
 
 	/** TODO: Json 데이터 생성 */
-	/** 테스트 형식 작성후 UE4에서 파싱*/
-	/** 파싱 성공한 형식에 맞춰서 데이터 생성하기 */
-
 	Json::Value root;
 
-	int asciiCode = 66;
-	int Index = 3;
 
 	Json::Value id;
 
-	Json::Value data;
-	for (auto name : dataNames)
+	int Index = 3;
+	while(true)
 	{
-		std::string cellIndex;
-		cellIndex = ((char)asciiCode);
-		cellIndex += std::to_string(Index);
-		auto cell = workSheet.cell(XLCellReference(cellIndex));
+		int asciiCode = 66;
 
-		std::cout << name << ": " << cell.value().get<int>() << std::endl;
+		auto checkInvalid = workSheet.cell(XLCellReference("A" + std::to_string(Index)));
+		if(InvalidValue(checkInvalid.valueType()))
+		{
+			break;
+		}
 
-		data[name] = cell.value().get<int>();
+		Json::Value data;
+		for (auto name : cellDatas)
+		{
+			std::string cellIndex;
+			cellIndex = ((char)asciiCode);
+			cellIndex += std::to_string(Index);
 
-		asciiCode++;
+			auto currentCell = workSheet.cell(XLCellReference(cellIndex));
+
+			data[name.second] = ConvertCellToJsonValue(name.second, currentCell.value());
+
+			asciiCode++;
+		}
+
+		id.append(data);
+		Index++;
 	}
-	
-	id.append(data);
 
 	root["id"] = id;
 
@@ -94,7 +129,7 @@ void System::GenerateSourceCode(std::string workSheetName, std::string outputDir
 {
 	std::cout << "Generate SourceCode to " + workSheetName << std::endl;
 
-	if (dataNames.empty())
+	if (cellDatas.empty())
 	{
 		std::cout << "ERROR: DataName Is Empty" << std::endl;
 		exit(-1);
@@ -133,11 +168,11 @@ std::string System::CreateHeaderCode(std::string workSheetName)
 		"\tGENERATED_USTRUCT_BODY()\n"
 		"public:\n";
 
-	for (auto name : dataNames)
+	for (auto name : cellDatas)
 	{
 		HeaderCode +=
 			"\tUPROPERTY(EditAnywhere, BlueprintReadWrite)\n"
-			"\tint " + name + ";\n";
+			"\t" + name.first + " " + name.second + ";\n";
 	}
 
 	HeaderCode +=
@@ -166,6 +201,11 @@ std::string System::CreateSourceCode(std::string workSheetName)
 
 void System::SetDataNames(XLWorksheet& workSheet)
 {
+	if(!cellDatas.empty())
+	{
+		cellDatas.clear();
+	}
+
 	int asciiCode = 65; // A
 
 	while (true)
@@ -184,7 +224,9 @@ void System::SetDataNames(XLWorksheet& workSheet)
 		{
 			if (cellIndex != "A1")
 			{
-				dataNames.push_back(cell.get<std::string>());
+				std::string toString;
+				toString = ((char)asciiCode);
+				cellDatas.push_back(std::make_pair(ConvertCellValueTypeToString(workSheet, asciiCode), cell.get<std::string>()));
 			}
 		}
 		catch (XLException e)
@@ -194,4 +236,46 @@ void System::SetDataNames(XLWorksheet& workSheet)
 
 		asciiCode++;
 	}
+}
+
+const std::string& System::ConvertCellValueTypeToString(XLWorksheet& workSheet, char asciiCode)
+{
+	std::string result;
+	int index = 3;
+
+	while(true)
+	{
+		std::string toString;
+		toString = asciiCode;
+
+		auto checkDataType = workSheet.cell(XLCellReference(toString + std::to_string(index))).value();
+		if(InvalidValue(checkDataType.valueType()))
+		{
+			break;
+		}
+
+		switch (checkDataType.valueType())
+		{
+		case XLValueType::Boolean:
+			result = "bool";
+			break;
+		case XLValueType::Float:
+			result = "float";
+			break;
+		case XLValueType::Integer:
+			if (result == "float") { break; }
+			result = "int";
+			break;
+		case XLValueType::String:
+			result = "FString";
+			break;
+		default:
+			std::cout << "ERROR: Failed Convert(Error Type)" << std::endl;
+			break;
+		}
+
+		index++;
+	}
+
+	return result;
 }
