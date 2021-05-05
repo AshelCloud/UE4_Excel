@@ -25,11 +25,11 @@ public:
 
 private:
 	/** .cpp와 .h를 생성 */
-	void GenerateSourceCode(std::string workSheetName, std::string outputDirectory);
+	bool GenerateSourceCode(std::string workSheetName, std::string outputDirectory);
 
 	/** Json 생성 */
 	/** A열에 있는 Cell이 Root이며 그 행을 데이터로 추가 */
-	void GenerateJson(XLWorksheet& workSheet, std::string outputDirectory);
+	bool GenerateJson(XLWorksheet& workSheet, std::string outputDirectory);
 
 	/** TODO: API 이름(현재 TESTPROJECT_API) argv로 받아오기 */
 	/** .h에 들어갈 row code를 반환 */
@@ -41,6 +41,7 @@ private:
 	/** 구조체에 들어갈 변수명을 채워넣음 */
 	void SetDataNames(XLWorksheet& workSheet);
 
+	/** Row를 전부 순회하며 자료형을 결정하는 함수 */
 	const std::string& ConvertCellValueTypeToString(XLWorksheet& workSheet, char asciiCode);
 
 private:

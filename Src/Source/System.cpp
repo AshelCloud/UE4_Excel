@@ -34,14 +34,24 @@ void System::Generate(XLWorksheet& workSheet, std::string outputDirectory)
 {
 	SetDataNames(workSheet);
 
-	GenerateSourceCode(workSheet.name(), outputDirectory);
-	GenerateJson(workSheet, outputDirectory);
+	bool result = true;
+
+	result = GenerateSourceCode(workSheet.name(), outputDirectory);
+	if (!result)
+	{
+		std::cout << "ERROR: Failed Generate SourceCode" << std::endl;
+		exit(-1);
+	}
+	result = GenerateJson(workSheet, outputDirectory);
+	if (!result)
+	{
+		std::cout << "ERROR: Failed Generate Json" << std::endl;
+		exit(-1);
+	}
 }
 
-void System::GenerateJson(XLWorksheet& workSheet, std::string outputDirectory)
+bool System::GenerateJson(XLWorksheet& workSheet, std::string outputDirectory)
 {
-	std::cout << "Generate Json to " + workSheet.name() << std::endl;
-
 	auto ConvertCellToJsonValue = [](std::string key, XLCellValue Cell) 
 	{
 		Json::Value data;
@@ -64,20 +74,17 @@ void System::GenerateJson(XLWorksheet& workSheet, std::string outputDirectory)
 			break;
 		}
 
-		std::cout << key << ": " << data[key] << std::endl;
-
 		return data;
 	};
 
 	if (cellDatas.empty())
 	{
 		std::cout << "ERROR: DataName Is Empty" << std::endl;
-		exit(-1);
+		return false;
 	}
 
 	/** TODO: Json 데이터 생성 */
 	Json::Value root;
-
 
 	Json::Value id;
 
@@ -122,17 +129,23 @@ void System::GenerateJson(XLWorksheet& workSheet, std::string outputDirectory)
 	{
 		file.write(jsonString.c_str(), jsonString.size());
 	}
+	else
+	{
+		file.close();
+		std::cout << "ERROR: Failed open file: " << outputDirectory + "Json\\" + workSheet.name() + ".json" << std::endl;
+		return false;
+	}
 	file.close();
+
+	return true;
 }
 
-void System::GenerateSourceCode(std::string workSheetName, std::string outputDirectory)
+bool System::GenerateSourceCode(std::string workSheetName, std::string outputDirectory)
 {
-	std::cout << "Generate SourceCode to " + workSheetName << std::endl;
-
 	if (cellDatas.empty())
 	{
 		std::cout << "ERROR: DataName Is Empty" << std::endl;
-		exit(-1);
+		return false;
 	}
 
 	std::ofstream file;
@@ -143,6 +156,12 @@ void System::GenerateSourceCode(std::string workSheetName, std::string outputDir
 		std::string Header = CreateHeaderCode(workSheetName);
 		file.write(Header.c_str(), Header.size());
 	}
+	else
+	{
+		file.close();
+		std::cout << "ERROR: Failed open file: " << outputDirectory + workSheetName + ".h" << std::endl;
+		return false;
+	}
 	file.close();
 
 	file.open(outputDirectory + workSheetName + ".cpp");
@@ -151,7 +170,15 @@ void System::GenerateSourceCode(std::string workSheetName, std::string outputDir
 		std::string Source = CreateSourceCode(workSheetName);
 		file.write(Source.c_str(), Source.size());
 	}
+	else
+	{
+		file.close();
+		std::cout << "ERROR: Failed open file: " << outputDirectory + workSheetName + ".cpp" << std::endl;
+		return false;
+	}
 	file.close();
+
+	return true;
 }
 
 std::string System::CreateHeaderCode(std::string workSheetName)
@@ -226,7 +253,11 @@ void System::SetDataNames(XLWorksheet& workSheet)
 			{
 				std::string toString;
 				toString = ((char)asciiCode);
-				cellDatas.push_back(std::make_pair(ConvertCellValueTypeToString(workSheet, asciiCode), cell.get<std::string>()));
+
+				std::string type = ConvertCellValueTypeToString(workSheet, asciiCode);
+				cellDatas.push_back(std::make_pair(type, cell.get<std::string>()));
+
+				std::cout << cell.get<std::string>() << "이 " << type << "으로 설정되었습니다." << std::endl;
 			}
 		}
 		catch (XLException e)
@@ -263,7 +294,10 @@ const std::string& System::ConvertCellValueTypeToString(XLWorksheet& workSheet, 
 			result = "float";
 			break;
 		case XLValueType::Integer:
-			if (result == "float") { break; }
+			if (result == "float") 
+			{
+				break;
+			}
 			result = "int";
 			break;
 		case XLValueType::String:

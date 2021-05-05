@@ -20,16 +20,25 @@ int main(int argc, char* argv[])
 		XLDocument doc;
 		doc.open(fileName);
 
+		std::cout << std::endl;
+		std::cout << "선택된 xlsx파일 이름: " << fileName << std::endl;
+
 		int asciiCode = 65; // A
 		for(std::string worksheetName : doc.workbook().worksheetNames())
 		{
 			auto wks = doc.workbook().worksheet(worksheetName);
+
+			std::cout << std::endl;
+			std::cout << "선택된 sheet 이름: " << worksheetName << std::endl;
+			std::cout << std::endl;
 
 			system.Generate(wks, outputDirectory);
 		}
 
 		doc.close();
 	}
+
+	std::cout << std::endl;
 
 	return 0;
 }
