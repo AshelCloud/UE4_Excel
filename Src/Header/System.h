@@ -21,11 +21,11 @@ public:
 	bool InvalidValue(XLValueType type);
 
 	/** 구조체 소스코드와 Json 생성 */
-	void Generate(XLWorksheet& workSheet, std::string sourceCodePath, std::string jsonPath);
+	void Generate(XLWorksheet& workSheet, std::string sourceCodePath, std::string headerCodePath, std::string jsonPath);
 
 private:
 	/** .cpp와 .h를 생성 */
-	bool GenerateSourceCode(std::string workSheetName, std::string outputDirectory);
+	bool GenerateSourceCode(std::string workSheetName, std::string sourceCodePath, std::string headerCodePath);
 
 	/** Json 생성 */
 	/** A열에 있는 Cell이 Root이며 그 행을 데이터로 추가 */

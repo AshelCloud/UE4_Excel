@@ -30,7 +30,7 @@ bool System::InvalidValue(XLValueType type)
 	return (type == XLValueType::Error) || (type == XLValueType::Empty);
 }
 
-void System::Generate(XLWorksheet& workSheet, std::string sourceCodePath, std::string jsonPath)
+void System::Generate(XLWorksheet& workSheet, std::string sourceCodePath, std::string headerCodePath, std::string jsonPath)
 {
 	SetDataNames(workSheet);
 
@@ -141,9 +141,10 @@ bool System::GenerateJson(XLWorksheet& workSheet, std::string outputDirectory)
 	return true;
 }
 
-bool System::GenerateSourceCode(std::string workSheetName, std::string outputDirectory)
+bool System::GenerateSourceCode(std::string workSheetName, std::string sourceCodePath, std::string headerCodePath)
 {
-	std::string Path = outputDirectory + "TableStruct\\";
+	/**TODO: 경로 수정 */
+	std::string sourcePath = sourceCodePath + "TableStruct\\";
 
 	if (cellDatas.empty())
 	{
@@ -153,7 +154,7 @@ bool System::GenerateSourceCode(std::string workSheetName, std::string outputDir
 
 	std::ofstream file;
 
-	file.open(Path + workSheetName + ".h");
+	file.open(sourcePath + workSheetName + ".h");
 	if (file.is_open())
 	{
 		std::string Header = CreateHeaderCode(workSheetName);
@@ -166,8 +167,10 @@ bool System::GenerateSourceCode(std::string workSheetName, std::string outputDir
 		return false;
 	}
 	file.close();
-
-	file.open(Path + workSheetName + ".cpp");
+	
+	/**TODO: 경로 수정 */
+	std::string headerPath = headerCodePath + "TableStruct\\";
+	file.open(headerCodePath + workSheetName + ".cpp");
 	if (file.is_open())
 	{
 		std::string Source = CreateSourceCode(workSheetName);
