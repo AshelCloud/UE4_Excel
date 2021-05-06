@@ -21,7 +21,7 @@ public:
 	bool InvalidValue(XLValueType type);
 
 	/** 구조체 소스코드와 Json 생성 */
-	void Generate(XLWorksheet& workSheet, std::string outputDirectory);
+	void Generate(XLWorksheet& workSheet, std::string sourceCodePath, std::string jsonPath);
 
 private:
 	/** .cpp와 .h를 생성 */
@@ -42,7 +42,7 @@ private:
 	void SetDataNames(XLWorksheet& workSheet);
 
 	/** Row를 전부 순회하며 자료형을 결정하는 함수 */
-	const std::string& ConvertCellValueTypeToString(XLWorksheet& workSheet, char asciiCode);
+	const std::string ConvertCellValueTypeToString(XLWorksheet& workSheet, char asciiCode);
 
 private:
 	/** 1행에 있는 Cell 이름들 (A1번째 Cell 값 제외) */

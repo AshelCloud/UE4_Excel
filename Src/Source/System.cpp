@@ -30,19 +30,19 @@ bool System::InvalidValue(XLValueType type)
 	return (type == XLValueType::Error) || (type == XLValueType::Empty);
 }
 
-void System::Generate(XLWorksheet& workSheet, std::string outputDirectory)
+void System::Generate(XLWorksheet& workSheet, std::string sourceCodePath, std::string jsonPath)
 {
 	SetDataNames(workSheet);
 
 	bool result = true;
 
-	result = GenerateSourceCode(workSheet.name(), outputDirectory);
+	result = GenerateSourceCode(workSheet.name(), sourceCodePath);
 	if (!result)
 	{
 		std::cout << "ERROR: Failed Generate SourceCode" << std::endl;
 		exit(-1);
 	}
-	result = GenerateJson(workSheet, outputDirectory);
+	result = GenerateJson(workSheet, jsonPath);
 	if (!result)
 	{
 		std::cout << "ERROR: Failed Generate Json" << std::endl;
@@ -52,25 +52,25 @@ void System::Generate(XLWorksheet& workSheet, std::string outputDirectory)
 
 bool System::GenerateJson(XLWorksheet& workSheet, std::string outputDirectory)
 {
-	auto ConvertCellToJsonValue = [](std::string key, XLCellValue Cell) 
+	auto ConvertCellToJsonValue = [](XLCellValue Cell) 
 	{
 		Json::Value data;
 		switch (Cell.valueType())
 		{
 		case XLValueType::Float:
-			data[key] = Cell.get<double>();
+			data = Cell.get<double>();
 			break;
 
 		case XLValueType::Integer:
-			data[key] = Cell.get<int>();
+			data = Cell.get<int>();
 			break;
 
 		case XLValueType::String:
-			data[key] = Cell.get<std::string>();
+			data = Cell.get<std::string>();
 			break;
 
 		case XLValueType::Boolean:
-			data[key] = Cell.get<bool>();
+			data = Cell.get<bool>();
 			break;
 		}
 
@@ -108,7 +108,7 @@ bool System::GenerateJson(XLWorksheet& workSheet, std::string outputDirectory)
 
 			auto currentCell = workSheet.cell(XLCellReference(cellIndex));
 
-			data[name.second] = ConvertCellToJsonValue(name.second, currentCell.value());
+			data[name.second] = ConvertCellToJsonValue(currentCell.value());
 
 			asciiCode++;
 		}
@@ -123,8 +123,9 @@ bool System::GenerateJson(XLWorksheet& workSheet, std::string outputDirectory)
 
 	std::string jsonString = Json::writeString(writer, root);
 
+	std::string path = outputDirectory + "Files\\";
 	std::ofstream file;
-	file.open(outputDirectory + "Json\\" + workSheet.name() + ".json");
+	file.open(path + workSheet.name() + ".json");
 	if(file.is_open())
 	{
 		file.write(jsonString.c_str(), jsonString.size());
@@ -132,7 +133,7 @@ bool System::GenerateJson(XLWorksheet& workSheet, std::string outputDirectory)
 	else
 	{
 		file.close();
-		std::cout << "ERROR: Failed open file: " << outputDirectory + "Json\\" + workSheet.name() + ".json" << std::endl;
+		std::cout << "ERROR: Failed open file: " << path + workSheet.name() + ".json" << std::endl;
 		return false;
 	}
 	file.close();
@@ -142,6 +143,8 @@ bool System::GenerateJson(XLWorksheet& workSheet, std::string outputDirectory)
 
 bool System::GenerateSourceCode(std::string workSheetName, std::string outputDirectory)
 {
+	std::string Path = outputDirectory + "TableStruct\\";
+
 	if (cellDatas.empty())
 	{
 		std::cout << "ERROR: DataName Is Empty" << std::endl;
@@ -150,7 +153,7 @@ bool System::GenerateSourceCode(std::string workSheetName, std::string outputDir
 
 	std::ofstream file;
 
-	file.open(outputDirectory + workSheetName + ".h");
+	file.open(Path + workSheetName + ".h");
 	if (file.is_open())
 	{
 		std::string Header = CreateHeaderCode(workSheetName);
@@ -159,12 +162,12 @@ bool System::GenerateSourceCode(std::string workSheetName, std::string outputDir
 	else
 	{
 		file.close();
-		std::cout << "ERROR: Failed open file: " << outputDirectory + workSheetName + ".h" << std::endl;
+		std::cout << "ERROR: Failed open file: " << Path + workSheetName + ".h" << std::endl;
 		return false;
 	}
 	file.close();
 
-	file.open(outputDirectory + workSheetName + ".cpp");
+	file.open(Path + workSheetName + ".cpp");
 	if (file.is_open())
 	{
 		std::string Source = CreateSourceCode(workSheetName);
@@ -173,7 +176,7 @@ bool System::GenerateSourceCode(std::string workSheetName, std::string outputDir
 	else
 	{
 		file.close();
-		std::cout << "ERROR: Failed open file: " << outputDirectory + workSheetName + ".cpp" << std::endl;
+		std::cout << "ERROR: Failed open file: " << Path + workSheetName + ".cpp" << std::endl;
 		return false;
 	}
 	file.close();
@@ -183,6 +186,7 @@ bool System::GenerateSourceCode(std::string workSheetName, std::string outputDir
 
 std::string System::CreateHeaderCode(std::string workSheetName)
 {
+
 	std::string HeaderCode =
 		"#pragma once\n"
 		"\n"
@@ -204,7 +208,7 @@ std::string System::CreateHeaderCode(std::string workSheetName)
 
 	HeaderCode +=
 		"};\n\n"
-		"class TESTPROJECT_API " + workSheetName + "\n"
+		"class PROJECTSINGWI_API " + workSheetName + "\n"
 		"{\n"
 		"public:\n"
 		"\t" + workSheetName + "();\n"
@@ -269,9 +273,9 @@ void System::SetDataNames(XLWorksheet& workSheet)
 	}
 }
 
-const std::string& System::ConvertCellValueTypeToString(XLWorksheet& workSheet, char asciiCode)
+const std::string System::ConvertCellValueTypeToString(XLWorksheet& workSheet, char asciiCode)
 {
-	std::string result;
+	std::string result = "";
 	int index = 3;
 
 	while(true)

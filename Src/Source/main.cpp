@@ -2,18 +2,27 @@
 #include <iostream>
 #include "System.h"
 
+/** TODO: Console 출력에 색 넣어서 Error, Warning 구분
+*	TODO: 자료형이 추정되지않을때 Error 출력하고 exit
+*/
+
+
 int main(int argc, char* argv[])
 {
-	if (argc < 2)
+	/*if (argc < 2)
 	{
 		std::cout << "ERROR: argv가 정의되지않았습니다." << std::endl;
 		return 0;
-	}
+	}*/
 
 	System system;
 	std::vector<std::string> fileNames = system.GetFilesName(argv[1]);
 
-	const std::string outputDirectory = argv[2];
+	/** Debug용 코드 */
+	//std::vector<std::string> fileNames = system.GetFilesName("C:\\Users\\PC5\\Desktop\\ExcelParsingProgram\\x64\\Release\\Excels\\");
+
+	/** Debug용 코드*/
+	//const std::string outputDirectory = "C:\\Users\\PC5\\Desktop\\ExcelParsingProgram\\x64\\Release\\Project\\Content\\";
 
 	for (std::string fileName : fileNames)
 	{
@@ -32,7 +41,7 @@ int main(int argc, char* argv[])
 			std::cout << "선택된 sheet 이름: " << worksheetName << std::endl;
 			std::cout << std::endl;
 
-			system.Generate(wks, outputDirectory);
+			system.Generate(wks, argv[2], argv[3]);
 		}
 
 		doc.close();
