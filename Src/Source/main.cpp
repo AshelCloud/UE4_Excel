@@ -2,20 +2,16 @@
 #include <iostream>
 #include "System.h"
 
-/** TODO: Console 출력에 색 넣어서 Error, Warning 구분
-*	TODO: 자료형이 추정되지않을때 Error 출력하고 exit
-*/
-
-
 int main(int argc, char* argv[])
 {
-	/*if (argc < 2)
-	{
-		std::cout << "ERROR: argv가 정의되지않았습니다." << std::endl;
-		return 0;
-	}*/
-
 	System system;
+
+	if (argc < 4)
+	{
+		system.PrintLog(Color::ERROR_RED, "ERROR: argv가 정의되지않았습니다.");
+		return 0;
+	}
+
 	std::vector<std::string> fileNames = system.GetFilesName(argv[1]);
 
 	/** Debug용 코드 */
@@ -30,7 +26,7 @@ int main(int argc, char* argv[])
 		doc.open(fileName);
 
 		std::cout << std::endl;
-		std::cout << "선택된 xlsx파일 이름: " << fileName << std::endl;
+		system.PrintLog(Color::LIGHTGREEN, "선택된 xlsx파일 이름: " + fileName);
 
 		int asciiCode = 65; // A
 		for(std::string worksheetName : doc.workbook().worksheetNames())
@@ -38,16 +34,16 @@ int main(int argc, char* argv[])
 			auto wks = doc.workbook().worksheet(worksheetName);
 
 			std::cout << std::endl;
-			std::cout << "선택된 sheet 이름: " << worksheetName << std::endl;
+			system.PrintLog(Color::GREEN, "선택된 sheet 이름: " + worksheetName);
 			std::cout << std::endl;
 
-			system.Generate(wks, argv[2], argv[3]);
+			system.Generate(wks, argv[2], argv[3], argv[4]);
 		}
 
 		doc.close();
 	}
 
-	std::cout << std::endl;
+	system.PrintResult();
 
 	return 0;
 }

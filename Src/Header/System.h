@@ -4,6 +4,26 @@
 #include<string>
 #include <OpenXLSX.hpp>
 
+enum class Color
+{
+	BLACK,
+	BLUE,
+	GREEN,
+	CYAN,
+	ERROR_RED,
+	MAGENTA,
+	BROUWN,
+	LIGHTGRAY,
+	DRAKGARY,
+	LIGHTBLUE,
+	LIGHTGREEN,
+	LIGHTCYAN,
+	LIGHTRED,
+	LIGHTMAGENTA,
+	WARNING_YELLOW,
+	WHITE
+};
+
 using namespace OpenXLSX;
 
 class System
@@ -22,6 +42,14 @@ public:
 
 	/** 구조체 소스코드와 Json 생성 */
 	void Generate(XLWorksheet& workSheet, std::string sourceCodePath, std::string headerCodePath, std::string jsonPath);
+
+	/** color값으로 콘솔에 Log 출력 
+	*	pushLog는 결과에서 출력될 로그에 포함시킬껀지 판단하는 변수
+	*/
+	void PrintLog(Color color, std::string log, bool pushLog = true);
+
+	/** 에러 갯수와 경고 갯수를 출력*/
+	void PrintResult();
 
 private:
 	/** .cpp와 .h를 생성 */
@@ -44,7 +72,16 @@ private:
 	/** Row를 전부 순회하며 자료형을 결정하는 함수 */
 	const std::string ConvertCellValueTypeToString(XLWorksheet& workSheet, char asciiCode);
 
+	/** Console 색상 출력 */
+	void SetTextColor(int color);
+
 private:
 	/** 1행에 있는 Cell 이름들 (A1번째 Cell 값 제외) */
 	std::vector<std::pair<std::string, std::string>> cellDatas;
+
+	std::vector<std::string> errorLogs;
+	std::vector<std::string> warningLogs;
+
+	int errorCount;
+	int warningCount;
 };

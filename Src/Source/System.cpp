@@ -4,8 +4,10 @@
 #include <fstream>
 #include <json.h>
 #include <cmath>
+#include <Windows.h>
 
-System::System()
+System::System():
+	warningCount(0), errorCount(0)
 {
 }
 
@@ -36,7 +38,7 @@ void System::Generate(XLWorksheet& workSheet, std::string sourceCodePath, std::s
 
 	bool result = true;
 
-	result = GenerateSourceCode(workSheet.name(), sourceCodePath);
+	result = GenerateSourceCode(workSheet.name(), sourceCodePath, headerCodePath);
 	if (!result)
 	{
 		std::cout << "ERROR: Failed Generate SourceCode" << std::endl;
@@ -144,7 +146,7 @@ bool System::GenerateJson(XLWorksheet& workSheet, std::string outputDirectory)
 bool System::GenerateSourceCode(std::string workSheetName, std::string sourceCodePath, std::string headerCodePath)
 {
 	/**TODO: 경로 수정 */
-	std::string sourcePath = sourceCodePath + "TableStruct\\";
+	std::string headerPath = headerCodePath + "TableStruct\\";
 
 	if (cellDatas.empty())
 	{
@@ -154,7 +156,7 @@ bool System::GenerateSourceCode(std::string workSheetName, std::string sourceCod
 
 	std::ofstream file;
 
-	file.open(sourcePath + workSheetName + ".h");
+	file.open(headerPath + workSheetName + ".h");
 	if (file.is_open())
 	{
 		std::string Header = CreateHeaderCode(workSheetName);
@@ -163,14 +165,14 @@ bool System::GenerateSourceCode(std::string workSheetName, std::string sourceCod
 	else
 	{
 		file.close();
-		std::cout << "ERROR: Failed open file: " << Path + workSheetName + ".h" << std::endl;
+		std::cout << "ERROR: Failed open file: " << headerPath + workSheetName + ".h" << std::endl;
 		return false;
 	}
 	file.close();
-	
+
+	std::string sourcePath = sourceCodePath + "TableStruct\\";
 	/**TODO: 경로 수정 */
-	std::string headerPath = headerCodePath + "TableStruct\\";
-	file.open(headerCodePath + workSheetName + ".cpp");
+	file.open(sourcePath + workSheetName + ".cpp");
 	if (file.is_open())
 	{
 		std::string Source = CreateSourceCode(workSheetName);
@@ -179,7 +181,7 @@ bool System::GenerateSourceCode(std::string workSheetName, std::string sourceCod
 	else
 	{
 		file.close();
-		std::cout << "ERROR: Failed open file: " << Path + workSheetName + ".cpp" << std::endl;
+		std::cout << "ERROR: Failed open file: " << sourcePath + workSheetName + ".cpp" << std::endl;
 		return false;
 	}
 	file.close();
@@ -262,9 +264,16 @@ void System::SetDataNames(XLWorksheet& workSheet)
 				toString = ((char)asciiCode);
 
 				std::string type = ConvertCellValueTypeToString(workSheet, asciiCode);
+				if(type == "")
+				{
+					PrintLog(Color::ERROR_RED, "ERROR:" + cell.get<std::string>() + "의 타입 추정에 실패했습니다.");
+					asciiCode++;
+					continue;
+				}
 				cellDatas.push_back(std::make_pair(type, cell.get<std::string>()));
 
-				std::cout << cell.get<std::string>() << "이 " << type << "으로 설정되었습니다." << std::endl;
+
+				PrintLog(Color::LIGHTBLUE, cell.get<std::string>() + "이(가) " + type + "으로 설정되었습니다.");
 			}
 		}
 		catch (XLException e)
@@ -287,7 +296,7 @@ const std::string System::ConvertCellValueTypeToString(XLWorksheet& workSheet, c
 		toString = asciiCode;
 
 		auto checkDataType = workSheet.cell(XLCellReference(toString + std::to_string(index))).value();
-		if(InvalidValue(checkDataType.valueType()))
+		if (InvalidValue(checkDataType.valueType()))
 		{
 			break;
 		}
@@ -310,13 +319,65 @@ const std::string System::ConvertCellValueTypeToString(XLWorksheet& workSheet, c
 		case XLValueType::String:
 			result = "FString";
 			break;
-		default:
-			std::cout << "ERROR: Failed Convert(Error Type)" << std::endl;
-			break;
 		}
 
 		index++;
 	}
 
 	return result;
+}
+
+void System::PrintLog(Color color, std::string log, bool pushLog)
+{
+	SetTextColor(static_cast<int>(color));
+
+	if(pushLog)
+	{
+		switch (color)
+		{
+		case Color::ERROR_RED:
+			errorCount++;
+			errorLogs.push_back(log);
+			break;
+		case Color::WARNING_YELLOW:
+			warningCount++;
+			warningLogs.push_back(log);
+			break;
+		}
+	}
+
+	std::cout << log << std::endl;
+
+	SetTextColor(static_cast<int>(Color::WHITE));
+}
+
+void System::PrintResult()
+{
+	Color logColor = Color::LIGHTRED;
+
+	if(errorCount + warningCount == 0)
+	{
+		logColor = Color::WHITE;
+	}
+	else
+	{
+		PrintLog(Color::LIGHTRED, "오류 목록: ");
+		for (auto log : errorLogs)
+		{
+			PrintLog(Color::LIGHTRED, log);
+		}
+
+		PrintLog(Color::WARNING_YELLOW, "경고 목록: ", false);
+		for(auto log : warningLogs)
+		{
+			PrintLog(Color::WARNING_YELLOW, log, false);
+		}
+	}
+
+	PrintLog(logColor, "오류: " + std::to_string(errorCount) + "개, 경고: " + std::to_string(warningCount) + "개");
+}
+
+void System::SetTextColor(int color)
+{
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
 }
