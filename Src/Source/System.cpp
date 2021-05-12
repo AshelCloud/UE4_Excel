@@ -266,7 +266,7 @@ void System::SetDataNames(XLWorksheet& workSheet)
 				std::string type = ConvertCellValueTypeToString(workSheet, asciiCode);
 				if(type == "")
 				{
-					PrintLog(Color::ERROR_RED, "ERROR:" + cell.get<std::string>() + "의 타입 추정에 실패했습니다.");
+					PrintLog(Color::ERROR_RED, workSheet.name() + "에 속해있는 " + cell.get<std::string>() + "의 타입 추정에 실패했습니다.");
 					asciiCode++;
 					continue;
 				}
@@ -290,6 +290,8 @@ const std::string System::ConvertCellValueTypeToString(XLWorksheet& workSheet, c
 	std::string result = "";
 	int index = 3;
 
+	bool convertFloat = false;
+
 	while(true)
 	{
 		std::string toString;
@@ -312,6 +314,7 @@ const std::string System::ConvertCellValueTypeToString(XLWorksheet& workSheet, c
 		case XLValueType::Integer:
 			if (result == "float") 
 			{
+				convertFloat = true;
 				break;
 			}
 			result = "int";
@@ -322,6 +325,17 @@ const std::string System::ConvertCellValueTypeToString(XLWorksheet& workSheet, c
 		}
 
 		index++;
+	}
+
+	if(convertFloat)
+	{
+		std::string toString;
+		toString = asciiCode;
+		toString += "1";
+
+		auto cell = workSheet.cell(XLCellReference(toString));
+
+		PrintLog(Color::WARNING_YELLOW, workSheet.name() + "에 속해있는 " + cell.value().get<std::string>() + "의 type이 int로 추정되다가 float으로 변경되었습니다.");
 	}
 
 	return result;
@@ -359,15 +373,17 @@ void System::PrintResult()
 	{
 		logColor = Color::WHITE;
 	}
-	else
+	
+
+	if(errorCount + warningCount >= 1)
 	{
-		PrintLog(Color::LIGHTRED, "오류 목록: ");
+		PrintLog(Color::WHITE, "오류 목록: ");
 		for (auto log : errorLogs)
 		{
 			PrintLog(Color::LIGHTRED, log);
 		}
 
-		PrintLog(Color::WARNING_YELLOW, "경고 목록: ", false);
+		PrintLog(Color::WHITE, "경고 목록: ", false);
 		for(auto log : warningLogs)
 		{
 			PrintLog(Color::WARNING_YELLOW, log, false);
